@@ -5,17 +5,20 @@ var ac = new AudioContext()
 var Contour = require('..')
 var wave = require('draw-wave')
 var Noise = require('noise-buffer')
+var COLOR = '#70B7FD'
 
 var params = ['l1', 'l2', 'l3', 't1', 't2', 't3', 't4']
 var buffer = Noise(3)
 var rendered = null
 var canvas = document.querySelector('.wave')
-var current = { duration: 1, ramp: 'exponential', t1: 0.1, t3: 0, t4: 1 }
+var code = document.querySelector('#config')
+var current = { ramp: 'exponential', t1: 0.1, t3: 0, t4: 1 }
 var timestamp = null
 
 function set (dial, value) { dial.val = { value: value }; dial.init() }
 
 nx.onload = function () {
+  nx.colorize(COLOR)
   var defaults = Contour.params(current)
   var dials = [dl1, dl2, dl3, dt1, dt2, dt3, dt4]
   params.map(function (name, i) {
@@ -28,7 +31,7 @@ nx.onload = function () {
     set(dials[i], current[name])
   })
   button1.on('*', function (e) {
-    if (e.press) source(ac, rendered, ac.destination).start()
+    if (e.press) play(ac, current)
   })
   selectRamp.value = { text: 'linear' }
   selectRamp.on('*', function (e) {
@@ -38,18 +41,34 @@ nx.onload = function () {
   update()
 }
 
+function play (ac, current) {
+  var vca = gain(ac, 0, ac.destination)
+  var env = Contour(ac, current)
+  env.duration = 1
+  env.connect(vca.gain)
+  env.onended = function () {
+    console.log('finished!')
+  }
+  var s = source(ac, Noise(3), vca)
+  env.start()
+  s.start()
+}
+
 function update (when) {
+  var params = JSON.stringify(current)
+    .replace(/\"\:/g, ': ').replace(/,\"/g, ', ').replace('"ramp', 'ramp')
+  code.innerHTML = 'var ac = new AudioContext()\nvar env = Contour(ac, ' + params + ')'
   setTimeout(function () {
-    if (!when || when === timestamp) render(current, canvas, '#52F6A4')
+    if (!when || when === timestamp) drawCanvas(current, canvas, COLOR)
   }, 100)
 }
 
-function render (current, canvas, color) {
-  console.log('render', current)
+function drawCanvas (current, canvas, color) {
   var off = new OfflineAudioContext(buffer.numberOfChannels,
     buffer.duration * buffer.sampleRate, buffer.sampleRate)
   var g = gain(off, 0, off.destination)
   var env = Contour(off, current)
+  env.duration = 1
   env.connect(g.gain)
   var s = source(off, Noise(3), g)
   env.start(0)
@@ -234,61 +253,78 @@ module.exports = function(length, type) {
 },{}],7:[function(require,module,exports){
 'use strict'
 var Voltage = require('voltage-source-node')
+var isNum = function (n) { return typeof n === 'number' }
 
+var NUMS = ['duration', 't1', 't2', 't3', 't4', 'l1', 'l2', 'l3']
 var DEFAULTS = {
-  ramp: 'linear', duration: Infinity,
-  l1: 1, l2: 0.4, l3: 0.8,
+  duration: Infinity, l1: 1, l2: 0.2, l3: 0.8,
   t1: 0.01, t2: 0.1, t3: 0, t4: 0.2
 }
 
+function rampFn (l) {
+  return l ? 'linearRampToValueAtTime' : 'exponentialRampToValueAtTime'
+}
+function ramp (l, node, level, time) { node.gain[rampFn(l)](level, time) }
+
+/**
+ * Create an envelope generator.
+ * @param {AudioContext} ac - the audio context
+ * @param {Object} options - (Optional) the envelope options
+ * @return {AudioNode} the envelope generator node
+ */
 function Contour (ac, options) {
-  var opts = options ? Object.assign({}, DEFAULTS, options) : DEFAULTS
   var env = ac.createGain()
+  var opts = Contour.params(options, env)
+  var isL = opts.ramp === 'linear'
+
   var tail = ac.createGain()
   tail.connect(env)
   var head = ac.createGain()
   head.connect(tail)
   var cv = Voltage(ac)
   cv.connect(head)
-  var linear = opts.ramp === 'linear'
 
   env.start = function (time) {
     time = Math.max(time || 0, ac.currentTime)
     cv.start(time)
     head.gain.setValueAtTime(0, time)
     head.gain.setValueAtTime(0.01, time + 0.000001)
-    ramp(head, opts.l1, time + opts.t1)
-    ramp(head, opts.l2, time + opts.t1 + opts.t2)
-    ramp(head, opts.l3, time + opts.t1 + opts.t2 + opts.t3)
+    ramp(isL, head, opts.l1, time + opts.t1)
+    ramp(isL, head, opts.l2, time + opts.t1 + opts.t2)
+    ramp(isL, head, opts.l3, time + opts.t1 + opts.t2 + opts.t3)
     if (isFinite(opts.duration)) env.stop(time + opts.duration)
   }
+
   env.stop = function (time) {
     time = Math.max(time || 0, ac.currentTime)
     tail.gain.cancelScheduledValues(time)
     tail.gain.setValueAtTime(env.gain.value, time)
     var endsAt = time + opts.t4
-    ramp(tail, 0.0001, endsAt)
+    ramp(isL, tail, 0.0001, endsAt)
     if (env.onended) {
-      var osc = ac.createOscillator()
-      osc.onended = env.onended
-      osc.start()
-      osc.stop(endsAt)
+      var s = Voltage(ac, 0)
+      s.connect(ac.destination)
+      s.onended = env.onended
+      s.start(ac.currentTime)
+      s.stop(endsAt)
     }
     return endsAt
   }
   return env
-
-  function ramp (n, level, time) {
-    console.log('ramp!', level, time, linear)
-    linear ? n.gain.linearRampToValueAtTime(level, time)
-    : n.gain.exponentialRampToValueAtTime(level, time)
-  }
 }
 
 Contour.params = function (options, dest) {
   dest = dest || {}
-  return options ? Object.assign(dest, DEFAULTS, options)
-    : Object.assign(dest, DEFAULTS)
+  options = options || {}
+  NUMS.forEach(function (name) {
+    dest[name] = isNum(options[name]) ? options[name] : DEFAULTS[name]
+  })
+  if (isNum(options.attack)) dest.t1 = options.attack
+  if (isNum(options.decay)) dest.t2 = options.decay
+  if (isNum(options.sustain)) dest.l3 = options.sustain
+  if (isNum(options.release)) dest.t4 = options.release
+  dest.ramp = options.ramp === 'exponential' ? options.ramp : 'linear'
+  return dest
 }
 
 module.exports = Contour

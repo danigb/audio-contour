@@ -2,7 +2,7 @@
 
 [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/feross/standard) [![license](https://img.shields.io/npm/l/audio-contour.svg?style=flat-square)](https://www.npmjs.com/package/audio-contour)
 
-A 5 stage audio envelope generator. You can see the **[demo here](danigb.github.io/audio-contour/example)**:
+A 5 stage audio envelope generator. You can see the **[demo here](https://danigb.github.io/audio-contour/example)**:
 
 ```js
 var Contour = require('audio-contour')
@@ -12,14 +12,12 @@ var vca = ac.createGain()
 var osc = ac.createOscillator()
 osc.connect(vca)
 
-var env = Contour(ac)
+var env = Contour(ac, { t1: 0.2, t4: 0.5 })
 env.connect(vca.gain)
 
 env.start()
-osc.start()
-env.onended = function () {
-  osc.stop()
-}
+env.onstart = function (when) { osc.start(when) }
+env.onended = function () { osc.stop() }
 env.stop(ac.currentTime + 3)
 ```
 
@@ -35,16 +33,17 @@ There are a lot of envelope generator implementations. Here are the standalone o
 - https://www.npmjs.com/package/adsr-envelope
 - https://github.com/itsjoesullivan/envelope-generator
 
-Why choose this:
+Why choose this over the others:
 
 - Unlike others, it implements a 5 stage envelope (and can be reduced to 4, 3 or 2 stages)
 - It supports `onended` event
 - Can specify gate duration (for sequencer style)
-- It's small
+- It's small (2.5Kb minified)
 
 Why don't choose this:
 
 - It's very young project, still in development and not battle tested.
+- Other libraries are great too!
 
 ## Installation
 
