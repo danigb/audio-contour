@@ -33,14 +33,14 @@ There are a lot of envelope generator implementations. Here are the standalone o
 - https://www.npmjs.com/package/adsr-envelope
 - https://github.com/itsjoesullivan/envelope-generator
 
-Why choose this over the others:
+Why choose this library over the others:
 
-- Unlike others, it implements a 5 stage envelope (and can be reduced to 4, 3 or 2 stages)
+- Unlike others, it implements a 5 stage envelope (and can be reduced to a standard ADSR envelope)
 - It supports `onstart` and `onended` events
 - Can specify gate duration (for sequencer style)
 - It's small (2.5Kb minified)
 
-Why don't choose this:
+Why don't choose this library:
 
 - It's very young project, still in development and not battle tested.
 - Other libraries are great too!
@@ -77,11 +77,18 @@ env.t4 = 0.5
 
 **Apply the envelope**
 
-To apply the envelope, you have to connect it to something. For example, you can create a vca (voltage controlled amplifier) connecting it to a gain:
+To apply the envelope, you have to connect it to something. For example, you can create a vca (voltage controlled amplifier) connecting it to a gain's gain param:
 
 ```js
 var vca = ac.createGain()
 env.connect(vca.gain)
+```
+
+Or create a vcf (voltage controlled filter) ocnnecting it to a filter frequency param:
+
+```js
+var vcf = ac.createBiquadFilter()
+env.connect(vcf.frequency)
 ```
 
 **Start and stop the envelope**
@@ -102,15 +109,6 @@ The `stop` function returns the time when the release phase ended. Can be used t
 osc.start(finish)
 ```
 
-You can add an `onevent` handler:
-
-```js
-env.onended = function () {
-  osc.stop()
-}
-env.stop(now + 1)
-```
-
 Remeber that **if duration is not `Infinity`, the envelope will stop automatically**:
 
 ```js
@@ -119,6 +117,16 @@ env.duration = 1
 env.start() // => it will automatically stop after 1 second
 ```
 
+**Events**
+
+Two events are supported: `onstart` and `onended`. The `onstart` event handler will be trigger at same time as the `start` function of the envelope, so it receives a time parameter. The `onended` event handler will be called when the envelope effectively stops:
+
+```js
+env.duration = 1
+env.onstart = function (when) { osc.start(when) }
+env.onended = function () { osc.stop(ac.currentTime) }
+env.start() // since duration is not Infinity, both envent handlers will be called
+```
 
 **Create a standard ADSR**
 
