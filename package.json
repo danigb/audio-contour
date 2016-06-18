@@ -1,0 +1,29 @@
+{
+  "name": "audio-contour",
+  "version": "0.0.0",
+  "description": "A 8 parameter audio envelope generator",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danigb/audio-contour.git"
+  },
+  "keywords": [
+    "envelope",
+    "generator",
+    "web",
+    "audio"
+  ],
+  "author": "danigb",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/danigb/audio-contour/issues"
+  },
+  "homepage": "https://github.com/danigb/audio-contour#readme",
+  "devDependencies": {
+    "tape": "^4.5.1",
+    "web-audio-test-api": "^0.5.2"
+  }
+}
