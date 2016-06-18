@@ -1,8 +1,9 @@
 {
+  "scripts": {
+    "start": "open index.html && watchify example.js -o assets/bundle.js"
+  },
   "dependencies": {
-    "adsr": "^1.0.1",
     "draw-wave": "^2.0.0",
-    "envelope-generator": "^2.0.0",
     "noise-buffer": "^2.0.1"
   }
 }

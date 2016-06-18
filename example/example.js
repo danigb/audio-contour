@@ -1,46 +1,68 @@
 /* global AudioContext OfflineAudioContext */
+/* global nx dt1 dt2 dt3 dt4 dl1 dl2 dl3 button1, selectRamp */
+var ac = new AudioContext()
 var Contour = require('..')
 var wave = require('draw-wave')
 var Noise = require('noise-buffer')
-var adsr = require('adsr')
 
+var params = ['l1', 'l2', 'l3', 't1', 't2', 't3', 't4']
 var buffer = Noise(3)
-wave.canvas(canvas(), buffer, '#52F6A4')
-render(contour, '#A452F6')
-render(adsrEnv, '#F6A452')
+var rendered = null
+var canvas = document.querySelector('.wave')
+var current = { duration: 1, ramp: 'exponential', t1: 0.1, t3: 0, t4: 1 }
+var timestamp = null
 
-function contour (ac) {
-  var g = gain(ac, 0, ac.destination)
-  var env = Contour(ac, {
-    ramp: 'exp', duration: 0.2,
-    t1: 0.1, l1: 1, t2: 0.3, l2: 0.1, t3: 0.3, t4: 5
+function set (dial, value) { dial.val = { value: value }; dial.init() }
+
+nx.onload = function () {
+  var defaults = Contour.params(current)
+  var dials = [dl1, dl2, dl3, dt1, dt2, dt3, dt4]
+  params.map(function (name, i) {
+    current[name] = defaults[name]
+    dials[i].on('*', function (e) {
+      current[name] = e.value
+      timestamp = Date.now()
+      update(timestamp)
+    })
+    set(dials[i], current[name])
   })
-  env.connect(g.gain)
-  var s = source(ac, Noise(3), g)
-  env.start(0)
-  s.start(0)
+  button1.on('*', function (e) {
+    if (e.press) source(ac, rendered, ac.destination).start()
+  })
+  selectRamp.value = { text: 'linear' }
+  selectRamp.on('*', function (e) {
+    current['ramp'] = e.text
+    update()
+  })
+  update()
 }
 
-function adsrEnv (ac) {
-  var g = gain(ac, 0, ac.destination)
-  var env = adsr(ac)
-  env.attack = 0.5
-  env.decay = 0.2
-  env.sustain = 0.4
-  env.connect(g.gain)
-  var s = source(ac, Noise(3), g)
-  env.start(0)
-  s.start()
+function update (when) {
+  setTimeout(function () {
+    if (!when || when === timestamp) render(current, canvas, '#52F6A4')
+  }, 100)
 }
 
-function render (env, color) {
+function render (current, canvas, color) {
+  console.log('render', current)
   var off = new OfflineAudioContext(buffer.numberOfChannels,
     buffer.duration * buffer.sampleRate, buffer.sampleRate)
-  console.log('Create context', off)
-  env(off)
+  var g = gain(off, 0, off.destination)
+  var env = Contour(off, current)
+  env.connect(g.gain)
+  var s = source(off, Noise(3), g)
+  env.start(0)
+  s.start(0)
   off.startRendering().then(function (buffer) {
-    wave.canvas(canvas(), buffer, color)
+    rendered = buffer
+    clearCanvas(canvas)
+    wave.canvas(canvas, buffer, color)
   })
+}
+
+function clearCanvas (canvas) {
+  var ctx = canvas.getContext('2d')
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 
 function source (ac, buffer, dest) {
@@ -55,12 +77,4 @@ function gain (ac, value, dest) {
   gain.gain.value = value
   gain.connect(dest)
   return gain
-}
-
-function canvas () {
-  var canvas = document.createElement('canvas')
-  canvas.width = 960
-  canvas.height = 200
-  document.body.appendChild(canvas)
-  return canvas
 }

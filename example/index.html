@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<title>Create oscillatores - Web Audio Assembler</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="initial-scale=1., user-scalable=no, width=device-width"/></head>
+  <link rel="stylesheet" href="assets/ss.css"/>
+<body>
+  <div class="main">
+    <h1>Audio Contour Example</h1>
+		<p>When <b>Time3</b> is 0, it's a normal <b>ADSR</b> envelope. Change it to see the
+			5 stages in action.</p>
+		<p>When <b>Time3</b> and <b>Time2</b> are 0, it's a normal <b>ASR</b> envelope.</p>
+		<br><br>
+		<br>
+
+		<canvas id="selectRamp" nx="select" choices="linear,exponential"></canvas>
+		<br><br>
+		<canvas id="dl1" val="0.5" label="Level1" nx="dial" width="80" height="80" min="0" max="1"></canvas>
+		<canvas id="dl2" label="Level2" nx="dial" width="80" height="80" min="0" max="1"></canvas>
+		<canvas id="dl3" label="Level3" nx="dial" width="80" height="80" min="0" max="1"></canvas>
+		&nbsp;&nbsp;&nbsp;&nbsp;
+		<canvas id="dt1" label="Time1" nx="dial" width="80" height="80" min="0" max="2"></canvas>
+		<canvas id="dt2" label="Time2" nx="dial" width="80" height="80" min="0" max="2"></canvas>
+		<canvas id="dt3" label="Time3" nx="dial" width="80" height="80" min="0" max="2"></canvas>
+		<canvas id="dt4" label="Time4" nx="dial" width="80" height="80" min="0" max="2"></canvas>
+		<br/>
+		<canvas width="720" height="150" class="wave"></canvas>
+		<br>
+		<canvas nx="button"></canvas>
+  </div>
+  <script type="text/javascript" src="assets/nexusUI.min.js"></script>
+  <script type="text/javascript" src="assets/bundle.js"></script>
+</body>
+</html>

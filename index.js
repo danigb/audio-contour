@@ -1,19 +1,20 @@
 'use strict'
+var Voltage = require('voltage-source-node')
 
 var DEFAULTS = {
   ramp: 'linear', duration: Infinity,
-  l1: 1, l2: 0.8, l3: 0.6,
+  l1: 1, l2: 0.4, l3: 0.8,
   t1: 0.01, t2: 0.1, t3: 0, t4: 0.2
 }
 
-module.exports = function Envelope (ac, options) {
+function Contour (ac, options) {
   var opts = options ? Object.assign({}, DEFAULTS, options) : DEFAULTS
   var env = ac.createGain()
   var tail = ac.createGain()
   tail.connect(env)
   var head = ac.createGain()
   head.connect(tail)
-  var cv = createCV(ac)
+  var cv = Voltage(ac)
   cv.connect(head)
   var linear = opts.ramp === 'linear'
 
@@ -50,12 +51,10 @@ module.exports = function Envelope (ac, options) {
   }
 }
 
-function createCV (ac) {
-  var buffer = ac.createBuffer(1, 2, ac.sampleRate)
-  var data = buffer.getChannelData(0)
-  data[0] = data[1] = 1
-  var source = ac.createBufferSource()
-  source.buffer = buffer
-  source.loop = true
-  return source
+Contour.params = function (options, dest) {
+  dest = dest || {}
+  return options ? Object.assign(dest, DEFAULTS, options)
+    : Object.assign(dest, DEFAULTS)
 }
+
+module.exports = Contour
