@@ -36,7 +36,7 @@ There are a lot of envelope generator implementations. Here are the standalone o
 Why choose this over the others:
 
 - Unlike others, it implements a 5 stage envelope (and can be reduced to 4, 3 or 2 stages)
-- It supports `onended` event
+- It supports `onstart` and `onended` events
 - Can specify gate duration (for sequencer style)
 - It's small (2.5Kb minified)
 

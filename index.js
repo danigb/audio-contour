@@ -33,6 +33,7 @@ function Contour (ac, options) {
 
   env.start = function (time) {
     time = Math.max(time || 0, ac.currentTime)
+    if (env.onstart) env.onstart(time)
     cv.start(time)
     head.gain.setValueAtTime(0, time)
     head.gain.setValueAtTime(0.01, time + 0.000001)

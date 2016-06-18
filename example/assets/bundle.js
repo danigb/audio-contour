@@ -9,7 +9,6 @@ var COLOR = '#70B7FD'
 
 var params = ['l1', 'l2', 'l3', 't1', 't2', 't3', 't4']
 var buffer = Noise(3)
-var rendered = null
 var canvas = document.querySelector('.wave')
 var code = document.querySelector('#config')
 var current = { ramp: 'exponential', t1: 0.1, t3: 0, t4: 1 }
@@ -46,9 +45,8 @@ function play (ac, current) {
   var env = Contour(ac, current)
   env.duration = 1
   env.connect(vca.gain)
-  env.onended = function () {
-    console.log('finished!')
-  }
+  env.onstart = function (t) { console.log('Started', t) }
+  env.onended = function () { console.log('Ended', ac.currentTime) }
   var s = source(ac, Noise(3), vca)
   env.start()
   s.start()
@@ -74,7 +72,6 @@ function drawCanvas (current, canvas, color) {
   env.start(0)
   s.start(0)
   off.startRendering().then(function (buffer) {
-    rendered = buffer
     clearCanvas(canvas)
     wave.canvas(canvas, buffer, color)
   })
@@ -286,6 +283,7 @@ function Contour (ac, options) {
 
   env.start = function (time) {
     time = Math.max(time || 0, ac.currentTime)
+    if (env.onstart) env.onstart(time)
     cv.start(time)
     head.gain.setValueAtTime(0, time)
     head.gain.setValueAtTime(0.01, time + 0.000001)

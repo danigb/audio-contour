@@ -28,7 +28,17 @@ test('ignore invalid options', function (t) {
 test('set adsr options', function (t) {
   var ac = new AudioContext()
   var env = Contour(ac, { attack: 0.1, decay: 0.2, sustain: 0.8, release: 0.5 })
-  assertOptions(t, env, 'linear', Infinity, 0.1, 0.2, 0, 0.5, 1, 0.4, 0.8)
+  assertOptions(t, env, 'linear', Infinity, 0.1, 0.2, 0, 0.5, 1, 0.2, 0.8)
+  t.end()
+})
+
+test('onstart event', function (t) {
+  var ac = new AudioContext()
+  var times = 0
+  var env = Contour(ac)
+  env.onstart = function () { times++ }
+  env.start()
+  t.equal(times, 1)
   t.end()
 })
 
