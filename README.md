@@ -29,7 +29,7 @@ This module implements a alpha-juno style envelope generator:
 
 If you want to learn more about envelope generators, read [this](https://github.com/micjamking/synth-secrets/blob/master/part-8.md)
 
-There are a lot of envelope generator implementations:
+There are a lot of envelope generator implementations. Here are the standalone ones I know (there are several audio libraries that implements them):
 
 - https://github.com/mmckegg/adsr
 - https://www.npmjs.com/package/adsr-envelope
@@ -44,7 +44,7 @@ Why choose this:
 
 Why don't choose this:
 
-- It's still in development
+- It's very young project, still in development and not battle tested.
 
 ## Installation
 
@@ -54,7 +54,7 @@ Via npm: `npm i --save audio-contour`
 
 **Create an envelope**
 
-To create an envelope use the Contour function:
+To create an envelope use the `Contour` function:
 
 ```js
 var ac = new AudioContext()
@@ -112,7 +112,7 @@ env.onended = function () {
 env.stop(now + 1)
 ```
 
-Remeber that **if duration is not Infinity, the envelope will stop automatically**:
+Remeber that **if duration is not `Infinity`, the envelope will stop automatically**:
 
 ```js
 var env = Contour(ac)
@@ -123,7 +123,9 @@ env.start() // => it will automatically stop after 1 second
 
 **Create a standard ADSR**
 
-When `time3` is 0, the audio-contour behaves like a normal ADSR envelope. You can use the standard `attack`, `decay`, `sustain` and `release` parameters to build the envelope:
+When `t3` is 0, the audio-contour behaves like a normal ADSR envelope.
+
+Additionally, you can use the standard `attack`, `decay`, `sustain` and `release` parameters in the constructor to build the envelope:
 
 ```js
 var env = Contour(ac, { attack: 0.1, decay: 0.2, sustain: 0.8, release: 0.5 })
@@ -140,4 +142,6 @@ To run the tests, clone this repo and: `npm install && npm test`.
 To run the example you need watchify installed: `npm install -g watchify`. Then, move to `examples` directory and type: `npm install && npm start`
 
 
-## License MIT
+## License
+
+MIT License
